@@ -1,0 +1,74 @@
+---
+skip_tests: true
+
+# (REQUIRED) Cluster details - Cluster represents the AAP cluster layer and any additional customizations
+
+cluster_name: "my-aap-terraform-cluster" # (REQUIRED) Name of the cluster
+cluster_domain: "example.com" # (REQUIRED) Domain of the cluster
+cluster_version: "2.5" # (REQUIRED) Version of the Automation Platform to be installed
+cluster_password: "<PUT YOUR PASSWORD HERE>" # (REQUIRED) Password for the Ansible Automation Platform web console
+
+allowed_ip: "XXX.XXX.XXX.XXX" # (REQUIRED) IP address to allow access to the Automation Platform web console. Usually it's your public IP address
+
+aws:
+  profile: "<PUT YOUR AWS PROFILE NAME HERE>" # (REQUIRED) AWS profile name to be used for the deployment. It should be configured in ~/.aws/credentials
+  region: "ap-southeast-2" # (REQUIRED) AWS region to deploy the cluster
+#  tags: # (OPTIONAL) Tags to be applied to the resources created by the installer
+#    owner: "" # (OPTIONAL)
+#    cost-center: ""
+#    service-phase: ""
+#    app-code: ""
+  ami:
+    installer:
+      id: "ami-0a27e5c739fe4fdf3" # (REQUIRED) AMI ID for the installer node (use ami-0a27e5c739fe4fdf3 for RHEL-9.5.0_HVM-20250128-x86_64-0-Access2-GP3)
+      type: "m5.xlarge"
+    platform:
+      id: "ami-0a27e5c739fe4fdf3" # (REQUIRED) AMI ID for the cluster nodes (use ami-0a27e5c739fe4fdf3 for RHEL-9.5.0_HVM-20250128-x86_64-0-Access2-GP3)
+      type: "m5.xlarge"
+    client:
+      id: "ami-0a27e5c739fe4fdf3" # (REQUIRED) AMI ID for the client nodes (use ami-0a27e5c739fe4fdf3 for RHEL-9.5.0_HVM-20250128-x86_64-0-Access2-GP3)
+      type: "m5.xlarge"
+
+ssh:
+  private_key: "/Users/amasolov/.ssh/id_rsa"         # (REQUIRED) Full path to the private key file, no "~" or "$HOME" allowed
+  public_key: "/Users/amasolov/.ssh/id_rsa.pub"      # (REQUIRED) Full path to the public key file, no "~" or "$HOME" allowed
+
+# (REQUIRED) Node inventory - List of nodes to be created in the cluster. You need at least one of each role so 6 nodes in total at least.
+#node_inventory:
+  # - name: ""            # (REQUIRED) Name of the node (must match [a-z0-9-\]+)
+  #   disk: ""            # (REQUIRED) Desired disk size in GB
+  #   role: ""            # (REQUIRED) Role of the node (automationgateway, automationcontroller, automationhub, automationedacontroller, execution_nodes, database, client).
+  #                       #  You need at least one of each role.
+  # ...
+
+node_inventory:
+  - name: "automationgateway-0"
+    disk: "60"
+    role: "automationgateway"
+  - name: "automationcontroller-0"
+    disk: "60"
+    role: "automationcontroller"
+  - name: "automationhub-0"
+    disk: "60"
+    role: "automationhub"
+  - name: "automationedacontroller-0"
+    disk: "60"
+    role: "automationedacontroller"
+  - name: "executionnode-0"
+    disk: "60"
+    role: "execution_nodes"
+  # - name: "execution_node-1" # (OPTIONAL) You can add more execution nodes if needed
+  #   disk: "60"
+  #   role: "execution_nodes"
+  - name: "database-0"
+    disk: "60"
+    role: "database"
+  # (OPTIONAL) You can add a managed client node if needed
+  - name: "client-0"
+    disk: "60"
+    role: "client"
+
+redhat:
+  username: "<PUT YOUR REDHAT USERNAME HERE>" # (REQUIRED) Red Hat account username
+  password: "<PUT YOUR REDHAT PASSWORD HERE>" # (REQUIRED) Red Hat account password
+

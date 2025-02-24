@@ -1,0 +1,97 @@
+resource "aws_instance" "#{ cluster_name }#-installer" {
+  ami                    = local.aws_installer_ami
+  instance_type          = local.aws_installer_type
+
+  subnet_id              = aws_subnet.#{ cluster_name }#-subnet.id
+  key_name               = aws_key_pair.#{ cluster_name }#-login-key.key_name
+  vpc_security_group_ids = [aws_security_group.#{ cluster_name }#-main.id]
+  associate_public_ip_address = "true"
+
+  user_data              = file("resources/user-data-node-RHEL9.sh")
+
+  provisioner "file" {
+    source      = "#{ ssh.private_key }#"
+    destination = "/home/ec2-user/.ssh/id_rsa"
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "file" {
+    content = templatefile("resources/inventory.tpl.yaml", {
+      redhat_username = local.redhat_username,
+      redhat_password = local.redhat_password,
+      cluster_domain  = local.cluster_domain,
+      cluster_password = local.cluster_password
+    })
+    destination = "/home/ec2-user/inventory.yaml"
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
+  root_block_device {
+    volume_size = 30
+  }
+
+  tags = {
+    Name = "${ local.cluster_name }-installer"
+  }
+}
+
+resource "ansible_host" "#{ cluster_name }#-installer" {
+  name   = aws_instance.#{ cluster_name }#-installer.public_dns
+  groups = ["installer"]
+  variables = {
+    ansible_user                 = "ec2-user",
+    ansible_ssh_private_key_file = "#{ ssh.private_key }#",
+    ansible_ssh_extra_args       = " -o StrictHostKeyChecking=no ",
+    cluster_hostname             = "installer.${ local.cluster_domain }",
+    cluster_private_ip           = aws_instance.#{ cluster_name }#-installer.private_ip,
+    cluster_public_ip            = aws_instance.#{ cluster_name }#-installer.public_ip,
+  }
+}
+
+#% for item in node_inventory %#
+resource "aws_instance" "#{ item.name }#" {
+  #% if item.role == "client" %#
+  ami                    = "#{ aws.ami.client.id }#"
+  instance_type          = "#{ aws.ami.client.type }#"
+  #% else %#
+  ami                    = "#{ aws.ami.platform.id }#"
+  instance_type          = "#{ aws.ami.platform.type }#"
+  #% endif %#
+  subnet_id              = aws_subnet.#{ cluster_name }#-subnet.id
+  key_name               = aws_key_pair.#{ cluster_name }#-login-key.key_name
+  vpc_security_group_ids = [aws_security_group.#{ cluster_name }#-main.id]
+  user_data              = file("resources/user-data-node-RHEL9.sh")
+  associate_public_ip_address = "true"
+  root_block_device {
+    volume_size = #{ item.disk }#
+  }
+  tags = {
+    Name = "${ local.cluster_name }-#{ item.name }#"
+  }
+}
+
+resource "ansible_host" "#{ item.name }#" {
+  name   = aws_instance.#{ item.name }#.public_dns
+  groups = ["#{ item.role }#"]
+  variables = {
+    ansible_user                 = "ec2-user",
+    ansible_ssh_private_key_file = "#{ ssh.private_key }#",
+    ansible_ssh_extra_args       = " -o StrictHostKeyChecking=no ",
+    cluster_hostname             = "#{ item.name }#.${ local.cluster_domain }",
+    cluster_private_ip           = aws_instance.#{ item.name }#.private_ip,
+    cluster_public_ip            = aws_instance.#{ item.name }#.public_ip,
+  }
+}
+
+#% endfor %#
+

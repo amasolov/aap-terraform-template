@@ -1,0 +1,26 @@
+locals {
+  cluster_name = "#{ cluster_name }#"
+  cluster_domain = "#{ cluster_domain }#"
+  cluster_password = provider::sops::file("../secrets/secrets.sops.yaml").data["cluster_password"]
+  allowed_ip = provider::sops::file("../secrets/secrets.sops.yaml").data["allowed_ip"]
+
+  aws_region = "#{ aws.region }#"
+  aws_profile = "#{ aws.profile }#"
+  aws_installer_ami = "#{ aws.ami.installer.id }#"
+  aws_installer_type = "#{ aws.ami.installer.type }#"
+  aws_platform_ami = "#{ aws.ami.platform.id }#"
+  aws_platform_type = "#{ aws.ami.platform.type }#"
+  aws_client_ami = "#{ aws.ami.client.id }#"
+  aws_client_type = "#{ aws.ami.client.type }#"
+
+  connection = {
+    type        = "ssh"
+    user        = "ec2-user"
+    private_key = provider::sops::file("../secrets/secrets.sops.yaml").data["ssh_private_key"]
+    public_key = provider::sops::file("../secrets/secrets.sops.yaml").data["ssh_public_key"]
+  }
+
+  redhat_username = provider::sops::file("../secrets/secrets.sops.yaml").data["redhat_username"]
+  redhat_password = provider::sops::file("../secrets/secrets.sops.yaml").data["redhat_password"]
+}
+

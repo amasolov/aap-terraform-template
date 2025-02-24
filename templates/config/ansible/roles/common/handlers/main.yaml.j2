@@ -1,0 +1,10 @@
+- name: Do reboot if needed
+  become: true
+  become_user: root
+  ansible.builtin.reboot:
+    post_reboot_delay: 30
+  notify: Wait for system to become reachable
+
+- name: Wait for system to become reachable
+  ansible.builtin.wait_for_connection:
+

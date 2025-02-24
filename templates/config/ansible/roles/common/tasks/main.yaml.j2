@@ -1,0 +1,89 @@
+- name: Load secret variables into the global namespace
+  community.sops.load_vars:
+    file: "{{ lookup('ansible.builtin.env', 'SECRETS_DIR', default='../secrets') }}/secrets.sops.yaml"
+
+- name: Wait 600 seconds for target connections to become reachable/usable
+  ansible.builtin.wait_for_connection:
+
+- name: Wait for cloud-init / user-data to finish
+  become: true
+  become_user: root
+  ansible.builtin.shell:
+    cmd: "/usr/bin/cloud-init status --wait"
+  changed_when: false
+
+- name: Set permissions on the private key
+  become: true
+  become_user: root
+  ignore_errors: true
+  ansible.builtin.shell:
+    cmd: "chmod 600 /home/ec2-user/.ssh/id_rsa"
+
+- name: Set a hostname specifying strategy
+  become: true
+  become_user: root
+  ansible.builtin.hostname:
+    name: "{{ cluster_hostname }}"
+    use: systemd
+  notify: Do reboot if needed
+
+- name: Add IP address of all hosts to all hosts
+  become: true
+  become_user: root
+  ansible.builtin.lineinfile:
+    dest: /etc/hosts
+    regexp: '.*{{ hostvars[item].cluster_private_ip }}$'
+    line: "{{ hostvars[item].cluster_private_ip }} {{ hostvars[item].cluster_hostname }}"
+    state: present
+  when: hostvars[item].cluster_hostname is defined
+  with_items: "{{ groups.all }}"
+
+- name: Disable RHUI repositories
+  become: true
+  become_user: root
+  ignore_errors: true
+  ansible.builtin.shell:
+    cmd: "{{ item }}"
+  with_items:
+    - "mv /etc/yum.repos.d/redhat-rhui-client-config.repo /etc/yum.repos.d/redhat-rhui-client-config.repo.disabled"
+    - "mv /etc/yum.repos.d/redhat-rhui.repo /etc/yum.repos.d/redhat-rhui.repo.disabled"
+
+- name: Manage Red Hat repositories using subscription-manager
+  become: true
+  become_user: root
+  ansible.builtin.shell:
+    cmd: "subscription-manager config --rhsm.manage_repos=1"
+
+- name: Register as user with password and auto-subscribe to available content
+  become: true
+  become_user: root
+  community.general.redhat_subscription:
+    state: present
+    username: "{{ redhat_username }}"
+    password: "{{ redhat_password }}"
+    auto_attach: true
+    force_register: true
+
+- name: RedHat execution block
+  when: ansible_os_family == "RedHat"
+  become: true
+  become_user: root
+  block:
+    - name: Upgrade all packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+
+    - name: Install yum-utils if needed
+      ansible.builtin.dnf:
+        name: yum-utils
+        state: present
+
+    - name: Check if reboot is required
+      ansible.builtin.shell:
+        cmd: "needs-restarting -r -s"
+      register: needs_restarting
+      changed_when: needs_restarting.rc == 1
+      failed_when: false
+      notify: Do reboot if needed
+

@@ -1,0 +1,24 @@
+[env]
+_.python.venv = { path = "{{config_root}}/.venv", create = true }
+SOPS_AGE_KEY_FILE = "{{config_root}}/age.key"
+ROOT_DIR = "{{config_root}}"
+ANSIBLE_DIR = "{{config_root}}/ansible"
+SECRETS_DIR = "{{config_root}}/secrets"
+ANSIBLE_CONFIG = "{{config_root}}/ansible/ansible.cfg"
+
+[tasks.deps]
+description = "Install dependencies"
+run = "uv pip install -r requirements.txt"
+
+[tools]
+# Template tools
+python = "3.13"
+ansible = "latest"
+uv = "latest"
+# Operations tools
+"aqua:FiloSottile/age" = "latest"
+"aqua:getsops/sops" = "latest"
+"aqua:go-task/task" = "latest"
+"aqua:jqlang/jq" = "latest"
+"aqua:hashicorp/terraform" = "latest"
+"aqua:aws/aws-cli" = "latest"

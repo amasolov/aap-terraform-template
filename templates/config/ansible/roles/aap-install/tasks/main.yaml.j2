@@ -1,0 +1,22 @@
+- name: Wait 600 seconds for target connections to become reachable/usable
+  ansible.builtin.wait_for_connection:
+
+- name: Enable ansible-automation-platform-#{ cluster_version }#-for-rhel-9-x86_64-rpms repository
+  become: true
+  become_user: root
+  community.general.rhsm_repository:
+    name: ansible-automation-platform-#{ cluster_version }#-for-rhel-9-x86_64-rpms
+
+- name: Download and install the latest version of the Ansible Automation Platform installer
+  become: true
+  become_user: root
+  ansible.builtin.dnf:
+    name: "ansible-automation-platform-installer"
+    state: latest
+
+- name: Run Ansible Automation Installer
+  ansible.builtin.shell:
+    cmd: "{{ item }}"
+  with_items:
+    - "/opt/ansible-automation-platform/installer/setup.sh -i inventory.yaml -e bundle_install=false -p ./"
+

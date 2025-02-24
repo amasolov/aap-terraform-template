@@ -1,0 +1,92 @@
+[automationgateway]
+#% for item in node_inventory %#
+#% if item.role == "automationgateway" %#
+#{ item.name }#.#{ cluster_domain}#
+#% endif %#
+#% endfor %#
+
+[automationcontroller]
+#% for item in node_inventory %#
+#% if item.role == "automationcontroller" %#
+#{ item.name }#.#{ cluster_domain}#
+#% endif %#
+#% endfor %#
+
+[automationcontroller:vars]
+peers=execution_nodes
+
+[execution_nodes]
+#% for item in node_inventory %#
+#% if item.role == "execution_nodes" %#
+#{ item.name }#.#{ cluster_domain}#
+#% endif %#
+#% endfor %#
+
+[automationhub]
+#% for item in node_inventory %#
+#% if item.role == "automationhub" %#
+#{ item.name }#.#{ cluster_domain}#
+#% endif %#
+#% endfor %#
+
+[automationedacontroller]
+#% for item in node_inventory %#
+#% if item.role == "automationedacontroller" %#
+#{ item.name }#.#{ cluster_domain}#
+#% endif %#
+#% endfor %#
+
+[database]
+#% for item in node_inventory %#
+#% if item.role == "database" %#
+#{ item.name }#.#{ cluster_domain}#
+#% endif %#
+#% endfor %#
+
+
+[redis]
+
+[all:vars]
+ansible_user=ec2-user
+ansible_connection=ssh
+ansible_ssh_extra_args=' -o StrictHostKeyChecking=no '
+ansible_ssh_private_key_file='/home/ec2-user/.ssh/id_rsa'
+ansible_become=true
+
+redis_mode=standalone
+
+admin_password='${ cluster_password }'
+pg_host='#{ node_inventory | selectattr('role', 'equalto', 'database') | map(attribute='name') | first }#.#{ cluster_domain }#'
+pg_port='5432'
+
+pg_database='awx'
+pg_username='awx'
+pg_password='${ cluster_password }'
+pg_sslmode='prefer'  # set to 'verify-full' for client-side enforced SSL
+
+automationgateway_admin_password='${ cluster_password }'
+automationgateway_pg_host='#{ node_inventory | selectattr('role', 'equalto', 'database') | map(attribute='name') | first }#.#{ cluster_domain }#'
+automationgateway_pg_database='automationgateway'
+automationgateway_pg_username='automationgateway'
+automationgateway_pg_password='${ cluster_password }'
+
+automationhub_admin_password='${ cluster_password }' # admin password for PAH UI
+automationhub_pg_host='#{ node_inventory | selectattr('role', 'equalto', 'database') | map(attribute='name') | first }#.#{ cluster_domain }#'
+automationhub_pg_port='5432'
+automationhub_pg_database='automationhub'
+automationhub_pg_username='automationhub'
+automationhub_pg_password='${ cluster_password }'
+automationhub_pg_sslmode='prefer'
+automationhub_require_content_approval=False
+automationhub_enable_unauthenticated_collection_access=True
+automationhub_ssl_validate_certs=False
+
+automationedacontroller_admin_password='${ cluster_password }' # Admin password for EDA UI
+automationedacontroller_pg_host='#{ node_inventory | selectattr('role', 'equalto', 'database') | map(attribute='name') | first }#.#{ cluster_domain }#'
+automationedacontroller_pg_port='5432'
+automationedacontroller_pg_database='automationedacontroller'
+automationedacontroller_pg_username='automationedacontroller'
+automationedacontroller_pg_password='${ cluster_password }'
+
+registry_username='${ redhat_username }'
+registry_password='${ redhat_password }'

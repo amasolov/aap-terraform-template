@@ -1,0 +1,8 @@
+---
+- name: Perform pre-nuke activities using Ansible
+  hosts: all
+  gather_facts: false
+  ignore_errors: true
+
+  roles:
+    - nuke

@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+tasks:
+
+  :nuke:
+    desc: Nuke cluster
+    cmds:
+      - task: ansible-nuke
+      - task: terraform-nuke
+
+  ansible-nuke:
+    desc: Perform pre-nuke activities using Ansible
+    cmds:
+      - cmd: |
+          ansible-playbook {{.ANSIBLE_DIR}}/nuke.yaml
+
+  terraform-nuke:
+    desc: Destroy terraform resources
+    cmds:
+      - cmd: |
+          terraform -chdir={{.TERRAFORM_DIR}} destroy -auto-approve

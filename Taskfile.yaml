@@ -1,0 +1,28 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+set: [pipefail]
+shopt: [globstar]
+
+vars:
+  TERRAFORM_DIR: "{{.ROOT_DIR}}/terraform"
+  ANSIBLE_DIR: "{{.ROOT_DIR}}/ansible"
+  SECRETS_DIR: "{{.ROOT_DIR}}/secrets"
+  PRIVATE_DIR: "{{.ROOT_DIR}}/.private"
+  ANSIBLE_CONFIG: "{{.ANSIBLE_DIR}}/ansible.cfg"
+
+env:
+  TERRAFORM_DIR: "{{.TERRAFORM_DIR}}"
+  ANSIBLE_DIR: "{{.ANSIBLE_DIR}}"
+  SECRETS_DIR: "{{.SECRETS_DIR}}"
+  ANSIBLE_CONFIG: "{{.ANSIBLE_DIR}}"
+  SOPS_AGE_KEY_FILE: "{{.ROOT_DIR}}/age.key"
+
+includes:
+  # bootstrap: .taskfiles/bootstrap
+  template: .taskfiles/template
+  deploy: .taskfiles/deploy
+  nuke: .taskfiles/nuke
+tasks:
+  default: task --list

@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+tasks:
+
+  :deploy:
+    desc: Deploy infrastructure
+    cmds:
+      - task: terraform-apply
+      - task: ansible-apply
+      - task: output-results
+
+
+  terraform-apply:
+    desc: Plan and apply Terraform
+    cmds:
+      - cmd: |
+          terraform -chdir={{.TERRAFORM_DIR}} plan
+      - cmd: |
+          terraform -chdir={{.TERRAFORM_DIR}} apply -auto-approve
+
+  ansible-apply:
+    desc: Apply Ansible playbooks
+    cmds:
+      - cmd: |
+          sleep 30
+      - cmd: |
+          ansible-playbook {{.ANSIBLE_DIR}}/main.yaml
+
+  output-results:
+    desc: Show lines to add to /etc/hosts
+    cmds:
+      - cmd: |
+          echo "Add the following lines to /etc/hosts:"
+          echo ""
+          echo "======================================="
+          cat {{.ROOT_DIR}}/hosts
+          echo "======================================="
+          echo ""
+          echo "Open https://{ automationgateway }/ in your browser"
+          echo ""

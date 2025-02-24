@@ -1,0 +1,15 @@
+provider "sops" {}
+
+provider "aws" {
+  region = local.aws_region
+  profile = local.aws_profile
+  #% if aws.tags is defined %#
+  default_tags {
+    tags = {
+      #% for key, value in aws.tags.items() %#
+      #{ key }# = "#{ value }#"
+      #% endfor %#
+    }
+  }
+  #% endif %#
+}

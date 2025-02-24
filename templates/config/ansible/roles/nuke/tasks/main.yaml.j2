@@ -1,0 +1,5 @@
+- name: Unregister system
+  become: true
+  become_user: root
+  community.general.redhat_subscription:
+    state: absent

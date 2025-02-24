@@ -1,0 +1,11 @@
+---
+creation_rules:
+  - path_regex: secrets/.*\.sops\.ya?ml
+    mac_only_encrypted: true
+    key_groups:
+      - age:
+          - "#{ age_public_key() }#"
+
+stores:
+  yaml:
+    indent: 2

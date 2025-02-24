@@ -1,0 +1,9 @@
+output "installer" {
+  value = aws_instance.#{ cluster_name }#-installer.public_ip
+}
+
+#% for item in node_inventory %#
+output "#{ item.name }#" {
+  value = aws_instance.#{ item.name }#.public_ip
+}
+#% endfor %#
