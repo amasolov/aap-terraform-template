@@ -1,4 +1,6 @@
-# Ansible Application Platform 2.5 + Terraform Deployment Template
+# aap-terraform-template
+
+This template is an opiniated starting point for deploying Ansible Automation Platform with Terraform.
 
 ## Features
 
