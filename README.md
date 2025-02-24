@@ -16,6 +16,8 @@ There are **4 stages** outlined below for completing this project, make sure you
 
 ### Stage 1: Prepare external requirements
 
+1. [Configure your AWS profile and credentials](https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-files.html) in ~/.aws/credentials. 
+
 ### Stage 2: Local Workstation
 
 1. Create a new **public** repository by clicking the big green "Use this template" button at the top of this page.
