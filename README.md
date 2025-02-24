@@ -81,7 +81,7 @@ There are **4 stages** outlined below for completing this project, make sure you
 
 2. Configure the VMs and install Ansible Application Platform
 
-   📍 _Installation of Ansible Application Platform takes a lot of time. It's normal._
+   📍 _Installation of Ansible Application Platform takes a lot of time. It's normal to wait for 30-40 minutes on the "Run Ansible Automation Installer" step with no progress._
 
     ```sh
     task deploy:ansible-apply
