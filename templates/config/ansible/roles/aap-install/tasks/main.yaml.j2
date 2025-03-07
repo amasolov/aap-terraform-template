@@ -10,8 +10,8 @@
 - name: Download and install the latest version of the Ansible Automation Platform installer
   become: true
   become_user: root
-  ansible.builtin.dnf:
-    name: "ansible-automation-platform-installer"
+  ansible.builtin.shell:
+    cmd: "dnf install -y ansible-automation-platform-installer"tomation-platform-installer"
     state: latest
 
 - name: Run Ansible Automation Installer
