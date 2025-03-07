@@ -19,6 +19,11 @@
   gather_facts: false
   tags: post-install
   tasks:
+    - name: Remove the hosts file
+      ansible.builtin.file:
+        path: "{{ lookup('ansible.builtin.env', 'ROOT_DIR') }}/hosts"
+        state: absent
+    
     - name: Touch the hosts file
       ansible.builtin.file:
         path: "{{ lookup('ansible.builtin.env', 'ROOT_DIR') }}/hosts"
