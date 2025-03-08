@@ -11,8 +11,7 @@
   become: true
   become_user: root
   ansible.builtin.shell:
-    cmd: "dnf install -y ansible-automation-platform-installer"tomation-platform-installer"
-    state: latest
+    cmd: "dnf install -y ansible-core ansible-automation-platform-installer"
 
 - name: Run Ansible Automation Installer
   ansible.builtin.shell:
