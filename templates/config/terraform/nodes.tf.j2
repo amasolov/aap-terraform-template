@@ -1,6 +1,8 @@
 resource "aws_instance" "#{ cluster_name }#-installer" {
   ami                    = local.aws_installer_ami
   instance_type          = local.aws_installer_type
+  iam_instance_profile   = aws_iam_instance_profile.#{ cluster_name }#-dns-profile.name
+
 
   subnet_id              = aws_subnet.#{ cluster_name }#-subnet.id
   key_name               = aws_key_pair.#{ cluster_name }#-login-key.key_name
@@ -8,6 +10,29 @@ resource "aws_instance" "#{ cluster_name }#-installer" {
   associate_public_ip_address = "true"
 
   user_data              = file("resources/user-data-node-RHEL9.sh")
+
+  provisioner "file" {
+    source      = "resources/update-dns-zone.sh"
+    destination = "/var/lib/cloud/scripts/per-boot/update-dns-zone.sh"
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /var/lib/cloud/scripts/per-boot/update-dns-zone.sh",
+    ]
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
 
   provisioner "file" {
     source      = "#{ ssh.private_key }#"
@@ -60,6 +85,7 @@ resource "ansible_host" "#{ cluster_name }#-installer" {
 
 #% for item in node_inventory %#
 resource "aws_instance" "#{ item.name }#" {
+  iam_instance_profile   = aws_iam_instance_profile.#{ cluster_name }#-dns-profile.name
   #% if item.role == "client" %#
   ami                    = "#{ aws.ami.client.id }#"
   instance_type          = "#{ aws.ami.client.type }#"
@@ -77,6 +103,28 @@ resource "aws_instance" "#{ item.name }#" {
   }
   tags = {
     Name = "${ local.cluster_name }-#{ item.name }#"
+  }
+  provisioner "file" {
+    source      = "resources/update-dns-zone.sh"
+    destination = "/var/lib/cloud/scripts/per-boot/update-dns-zone.sh"
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /var/lib/cloud/scripts/per-boot/update-dns-zone.sh",
+    ]
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
   }
 }
 

@@ -2,4 +2,10 @@
 exec > >(tee /home/ec2-user/userdata.log) 2>&1
 
 yum update -y
-yum install -y vim git wget bind-utils
+yum install -y vim git wget bind-utils unzip curl
+
+curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+unzip awscli-bundle.zip
+sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+
+chmod +x /var/lib/cloud/scripts/per-boot/update-dns-zone.sh
