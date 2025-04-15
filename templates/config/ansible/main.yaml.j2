@@ -8,35 +8,19 @@
 
 - name: Install Ansible Application Platform
   hosts: installer
-  gather_facts: false
-  tags: aap_installation
-  roles:
-    - aap-install
-
-- name: Post-installation activities for Ansible Application Platform
-  hosts: 127.0.0.1
-  connection: local
-  gather_facts: false
-  tags: post-install
+  gather_facts: true
+  tags: aap25_install
   tasks:
-    - name: Remove the hosts file
-      ansible.builtin.file:
-        path: "{{ lookup('ansible.builtin.env', 'ROOT_DIR') }}/hosts"
-        state: absent
-    
-    - name: Touch the hosts file
-      ansible.builtin.file:
-        path: "{{ lookup('ansible.builtin.env', 'ROOT_DIR') }}/hosts"
-        state: touch
-        mode: u+rw,g-wx,o-rwx
-        modification_time: preserve
-        access_time: preserve
 
-    - name: Create hosts file in the current directory
-      ansible.builtin.lineinfile:
-        dest: "{{ lookup('ansible.builtin.env', 'ROOT_DIR') }}/hosts"
-        regexp: '.*{{ hostvars[item].cluster_public_ip }}$'
-        line: "{{ hostvars[item].cluster_public_ip }} {{ hostvars[item].cluster_hostname }}"
-        state: present
-      when: hostvars[item].cluster_hostname is defined
-      with_items: "{{ groups.all }}"
+    - name: Install collections
+      ansible.builtin.shell:
+        chdir: "/home/ec2-user/install/"
+        cmd: "ansible-galaxy install -r requirements.yaml"
+      changed_when: false
+
+    - name: Install AAP
+      ansible.builtin.shell:
+        chdir: "/home/ec2-user/install/"
+        cmd: "ansible-playbook -i inventory main.yaml"
+      changed_when: false
+

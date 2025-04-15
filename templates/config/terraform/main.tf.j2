@@ -63,12 +63,14 @@ resource "aws_route_table_association" "#{ cluster_name }#-public-association" {
  route_table_id = aws_route_table.#{ cluster_name }#-main-rt.id
 }
 
-resource "aws_route53_zone" "#{ cluster_name }#-public" {
-  name = "#{ cluster_domain }#"
+data "aws_route53_zone" #{ cluster_name }#-public {
+  name         = "#{ cluster_domain }#."
+  private_zone = false
 }
 
 resource "aws_route53_zone" "#{ cluster_name }#-private" {
   name = "#{ cluster_domain }#"
+  force_destroy = true
   vpc {
     vpc_id = aws_vpc.#{ cluster_name }#-main.id
   }
@@ -77,62 +79,56 @@ resource "aws_route53_zone" "#{ cluster_name }#-private" {
 resource "aws_iam_role" "#{ cluster_name }#-dns-role" {
   name = "#{ cluster_name }#-dns-role"
 
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
+  assume_role_policy = jsonencode(
     {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Sid = ""
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
       },
-      "Action": "sts:AssumeRole"
+    ]
     }
-  ]
-}
-EOF
+  )
 }
 
 resource "aws_iam_policy" "#{ cluster_name }#-dns-policy" {
   name = "#{ cluster_name }#-dns-policy"
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "ec2:Describe*"
-      ],
-      "Effect": "Allow",
-      "Resource": "*"
-    },
-    {
-      "Action": [
-        "route53:ChangeResourceRecordSets"
-      ],
-      "Effect": "Allow",
-      "Resource": "arn:aws:route53:::hostedzone/{ aws_route53_zone.#{ cluster_name }#-public.zone_id }"
-    },
-    {
-      "Action": [
-        "route53:ChangeResourceRecordSets"
-      ],
-      "Effect": "Allow",
-      "Resource": "arn:aws:route53:::hostedzone/{ aws_route53_zone.#{ cluster_name }#-private.zone_id }"
-    }
-  ]
-}
-EOF
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "ec2:Describe*",
+        ]
+        Effect = "Allow"
+        Resource = "*"
+      },
+      {
+        Action = [
+          "route53:ChangeResourceRecordSets",
+        ]
+        Effect = "Allow"
+        Resource = "arn:aws:route53:::hostedzone/${ aws_route53_zone.#{ cluster_name }#-private.zone_id }"
+      },
+
+    ]
+  })
 }
 
+
 resource "aws_iam_role_policy_attachment" "#{ cluster_name }#-dns-policy-attachment" {
-  role       = aws_iam_role.#{ cluster_name }#-dns-role
-  policy_arn = aws_iam_policy.#{ cluster_name }#-dns-policy
+  role       = aws_iam_role.#{ cluster_name }#-dns-role.name
+  policy_arn = aws_iam_policy.#{ cluster_name }#-dns-policy.arn
 }
 
 
 resource "aws_iam_instance_profile" "#{ cluster_name }#-dns-profile" {
   name = "#{ cluster_name }#-dns-profile"
-  role = "${aws_iam_role.#{ cluster_name }#-dns-role}"
+  role = aws_iam_role.#{ cluster_name }#-dns-role.name
 }

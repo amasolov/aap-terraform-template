@@ -71,4 +71,4 @@ node_inventory:
 redhat:
   username: "<PUT YOUR REDHAT USERNAME HERE>" # (REQUIRED) Red Hat account username
   password: "<PUT YOUR REDHAT PASSWORD HERE>" # (REQUIRED) Red Hat account password
-
+  token: "<PUT YOUR RED HAT API TOKEN HERE>" # (REQUIRED) Red Hat token

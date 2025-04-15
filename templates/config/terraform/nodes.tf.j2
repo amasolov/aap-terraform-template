@@ -12,29 +12,6 @@ resource "aws_instance" "#{ cluster_name }#-installer" {
   user_data              = file("resources/user-data-node-RHEL9.sh")
 
   provisioner "file" {
-    source      = "resources/update-dns-zone.sh"
-    destination = "/var/lib/cloud/scripts/per-boot/update-dns-zone.sh"
-    connection {
-      type        = local.connection["type"]
-      user        = local.connection["user"]
-      private_key = local.connection["private_key"]
-      host        = self.public_ip
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /var/lib/cloud/scripts/per-boot/update-dns-zone.sh",
-    ]
-    connection {
-      type        = local.connection["type"]
-      user        = local.connection["user"]
-      private_key = local.connection["private_key"]
-      host        = self.public_ip
-    }
-  }
-
-  provisioner "file" {
     source      = "#{ ssh.private_key }#"
     destination = "/home/ec2-user/.ssh/id_rsa"
     connection {
@@ -45,14 +22,95 @@ resource "aws_instance" "#{ cluster_name }#-installer" {
     }
   }
 
+  provisioner "remote-exec" {
+    inline = [
+      "mkdir -p /home/ec2-user/install/inventory_vars",
+    ]
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
   provisioner "file" {
-    content = templatefile("resources/inventory.tpl.yaml", {
-      redhat_username = local.redhat_username,
-      redhat_password = local.redhat_password,
-      cluster_domain  = local.cluster_domain,
-      cluster_password = local.cluster_password
+    content = templatefile("resources/inventory.tpl", {
+      cluster_domain  = local.cluster_domain
     })
-    destination = "/home/ec2-user/inventory.yaml"
+    destination = "/home/ec2-user/install/inventory"
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "file" {
+    content = templatefile("resources/inventory_vars.tpl.yaml", {
+      cluster_domain  = local.cluster_domain
+      cluster_password = local.cluster_password
+      redhat_token = local.redhat_token
+      redhat_username = local.redhat_username
+      redhat_password = local.redhat_password
+    })
+    destination = "/home/ec2-user/install/inventory_vars/variables.yaml"
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "file" {
+    source      = "resources/update-dns-zone.sh"
+    destination = "/home/ec2-user/update-dns-zone.sh"
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "file" {
+    source      = "resources/main.yaml"
+    destination = "/home/ec2-user/install/main.yaml"
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "file" {
+    source      = "resources/reboot.yaml"
+    destination = "/home/ec2-user/install/reboot.yaml"
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "file" {
+    source      = "resources/requirements.yaml"
+    destination = "/home/ec2-user/install/requirements.yaml"
+    connection {
+      type        = local.connection["type"]
+      user        = local.connection["user"]
+      private_key = local.connection["private_key"]
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "file" {
+    source      = "resources/ansible.cfg"
+    destination = "/home/ec2-user/install/ansible.cfg"
     connection {
       type        = local.connection["type"]
       user        = local.connection["user"]
@@ -67,6 +125,8 @@ resource "aws_instance" "#{ cluster_name }#-installer" {
 
   tags = {
     Name = "${ local.cluster_name }-installer"
+    AUTO_DNS_ZONE = aws_route53_zone.#{ cluster_name }#-private.zone_id
+    AUTO_DNS_NAME = "installer.${ local.cluster_domain }"
   }
 }
 
@@ -98,15 +158,10 @@ resource "aws_instance" "#{ item.name }#" {
   vpc_security_group_ids = [aws_security_group.#{ cluster_name }#-main.id]
   user_data              = file("resources/user-data-node-RHEL9.sh")
   associate_public_ip_address = "true"
-  root_block_device {
-    volume_size = #{ item.disk }#
-  }
-  tags = {
-    Name = "${ local.cluster_name }-#{ item.name }#"
-  }
+
   provisioner "file" {
     source      = "resources/update-dns-zone.sh"
-    destination = "/var/lib/cloud/scripts/per-boot/update-dns-zone.sh"
+    destination = "/home/ec2-user/update-dns-zone.sh"
     connection {
       type        = local.connection["type"]
       user        = local.connection["user"]
@@ -115,16 +170,13 @@ resource "aws_instance" "#{ item.name }#" {
     }
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /var/lib/cloud/scripts/per-boot/update-dns-zone.sh",
-    ]
-    connection {
-      type        = local.connection["type"]
-      user        = local.connection["user"]
-      private_key = local.connection["private_key"]
-      host        = self.public_ip
-    }
+  root_block_device {
+    volume_size = #{ item.disk }#
+  }
+  tags = {
+    Name = "${ local.cluster_name }-#{ item.name }#"
+    AUTO_DNS_ZONE = aws_route53_zone.#{ cluster_name }#-private.zone_id
+    AUTO_DNS_NAME = "#{ item.name }#.${ local.cluster_domain }"
   }
 }
 

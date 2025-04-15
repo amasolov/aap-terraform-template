@@ -22,5 +22,6 @@ locals {
 
   redhat_username = provider::sops::file("../secrets/secrets.sops.yaml").data["redhat_username"]
   redhat_password = provider::sops::file("../secrets/secrets.sops.yaml").data["redhat_password"]
+  redhat_token = provider::sops::file("../secrets/secrets.sops.yaml").data["redhat_token"]
 }
 

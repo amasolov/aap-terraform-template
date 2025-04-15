@@ -1,0 +1,71 @@
+---
+aap_setup_down_offline_token: "${redhat_token}"
+aap_setup_down_version: "2.5"
+aap_setup_rhel_version: "9"
+aap_setup_down_type: "setup"
+aap_setup_containerized: true
+aap_setup_inst_force: true
+aap_setup_inst_log_dir: "/home/ec2-user/install/"
+
+aap_setup_prep_inv_nodes:
+  automationcontroller: "{{ groups['automationcontroller'] }}"
+  automationeda: "{{ groups['automationeda'] }}"
+  automationgateway: "{{ groups['automationgateway'] }}"
+  database: "{{ groups['database'] | default(omit) }}"
+  automationhub: "{{ groups['automationhub'] }}"
+  execution_nodes: "{{ groups['execution_nodes'] }}"
+  redis: "{{ groups['redis'] }}"
+aap_setup_prep_inv_vars:
+  automationcontroller: # denotes the automation controller nodes as hybrid nodes (controller and execution)
+    peers: execution_nodes
+    node_type: hybrid
+    ignore_preflight_errors: true
+  automationhub:
+    ignore_preflight_errors: true
+  automationedacontroller:
+    ignore_preflight_errors: true
+  automationgateway:
+    ignore_preflight_errors: true
+  execution_nodes:
+    node_type: execution
+
+  all:
+    ansible_user: ec2-user
+    ansible_connection: ssh
+    ansible_ssh_extra_args: ' -o StrictHostKeyChecking=no '
+    ansible_ssh_private_key_file: '/home/ec2-user/.ssh/id_rsa'
+    redis_mode: cluster
+    admin_password: "${cluster_password}"
+
+    pg_host: 'database-0.#{ cluster_domain }#'
+    pg_database: 'awx'
+    pg_username: 'awx'
+    pg_port: '5432'
+    pg_password: "${cluster_password}"
+    pg_sslmode: 'prefer'  # set to 'verify-full' for client-side enforced SSL
+
+    controller_pg_host: 'database-0.#{ cluster_domain }#'
+    controller_pg_password: "${cluster_password}"
+
+    hub_pg_host: 'database-0.#{ cluster_domain }#'
+    hub_pg_password: "${cluster_password}"
+
+    eda_pg_host: 'database-0.#{ cluster_domain }#'
+    eda_pg_password: "${cluster_password}"
+
+    gateway_pg_host: 'database-0.#{ cluster_domain }#'
+    gateway_pg_password: "${cluster_password}"
+
+aap_setup_inst_extra_vars:
+  create_preload_data: false
+  disable_no_log: true
+
+aap_setup_prep_inv_secrets:
+  all:
+    registry_username: "${redhat_username}"
+    registry_password: "${redhat_password}"
+    controller_admin_password: "${cluster_password}"
+    postgresql_admin_password: "${cluster_password}"
+    hub_admin_password: "${cluster_password}"
+    eda_admin_password: "${cluster_password}"
+    gateway_admin_password: "${cluster_password}"

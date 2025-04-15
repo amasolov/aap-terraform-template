@@ -1,0 +1,61 @@
+[installer]
+installer.#{ cluster_domain }#
+
+[automationgateway]
+#% for item in node_inventory %#
+#% if item.role == "automationgateway" %#
+#{ item.name }#.#{ cluster_domain }#
+#% endif %#
+#% endfor %#
+
+[automationcontroller]
+#% for item in node_inventory %#
+#% if item.role == "automationcontroller" %#
+#{ item.name }#.#{ cluster_domain }#
+#% endif %#
+#% endfor %#
+
+[execution_nodes]
+#% for item in node_inventory %#
+#% if item.role == "execution_nodes" %#
+#{ item.name }#.#{ cluster_domain }#
+#% endif %#
+#% endfor %#
+
+[automationhub]
+#% for item in node_inventory %#
+#% if item.role == "automationhub" %#
+#{ item.name }#.#{ cluster_domain }#
+#% endif %#
+#% endfor %#
+
+[automationeda]
+#% for item in node_inventory %#
+#% if item.role == "automationedacontroller" %#
+#{ item.name }#.#{ cluster_domain}#
+#% endif %#
+#% endfor %#
+
+[database]
+#% for item in node_inventory %#
+#% if item.role == "database" %#
+#{ item.name }#.#{ cluster_domain}#
+#% endif %#
+#% endfor %#
+
+[redis]
+#% for item in node_inventory %#
+#% if item.role == "automationedacontroller" %#
+#{ item.name }#.#{ cluster_domain}#
+#% endif %#
+#% endfor %#
+#% for item in node_inventory %#
+#% if item.role == "automationcontroller" %#
+#{ item.name }#.#{ cluster_domain }#
+#% endif %#
+#% endfor %#
+#% for item in node_inventory %#
+#% if item.role == "automationgateway" %#
+#{ item.name }#.#{ cluster_domain }#
+#% endif %#
+#% endfor %#
